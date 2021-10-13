@@ -52,26 +52,6 @@ for i in range(int(size/slide)):
 	if(time > start + day):
 		break
 
-	# prepare moving average data
-	arr = []
-	for i in range(offset, offset+slide):
-		arr.append([i, plain[i]])
-	from simplification.cutil import (
-	    simplify_coords,
-	    simplify_coords_idx,
-	    simplify_coords_vw,
-	    simplify_coords_vw_idx,
-	    simplify_coords_vwp,
-	)
-
-	# simplify data by polyline geometry
-	coords = simplify_coords_vw(arr, 1)
-	xy = []
-	idx = []
-	for i in range(len(coords)):
-		xy.append(coords[i][1])
-		idx.append(coords[i][0]-offset)
-
 	# iterate ask/bid middle average prices flow
 	for i in range(1, slide-ma):
 
