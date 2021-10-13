@@ -51,7 +51,7 @@ for i in range(int(size/slide)):
 		break
 
 	# iterate ask/bid middle average prices flow
-	for i in range(1, slide-ma):
+	for i in range(1, slide):
 
 		avg_p = avg[offset+i] # current
 		avg_p_last = avg[offset+i-1] # last
