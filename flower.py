@@ -1,8 +1,5 @@
 import sys
-import os
-import datetime
 import math
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -37,6 +34,7 @@ start = prices[0][2] # start time
 
 # virtual pocket
 had = 100 # start cash
+leverage = 50
 out = 0
 last = 0
 trade = 0
@@ -76,10 +74,10 @@ for i in range(int(size/slide)):
 		if(finish and out != 0):
 			trade = trade + 1
 			if(sell):
-				had = (out * last) + (out * (bid - last) * 50)
+				had = (out * last) + (out * (bid - last) * leverage)
 				print("buy_close:"+str(had)+"|price:"+str(bid)+")");
 			elif(buy):
-				had = (out * last) + (out * (last - ask) * 50)
+				had = (out * last) + (out * (last - ask) * leverage)
 				print("sell_close:"+str(had)+"|price:"+str(ask)+")");
 			out = 0
 			last = 0
