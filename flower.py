@@ -34,7 +34,7 @@ start = prices[0][2] # start time
 
 # virtual pocket
 had = 100 # start cash
-leverage = 50
+leverage = 50 # market leverage
 out = 0
 last = 0
 trade = 0
