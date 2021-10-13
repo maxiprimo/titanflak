@@ -1,5 +1,5 @@
 # trillionflak
-Easy Unlimited Capital.
+Easy Ultimate Capital.
 
 Use Bid/Ask-Middle Price Moving Average And Flow The Exchange Wave.
 
