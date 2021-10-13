@@ -39,15 +39,13 @@ start = prices[0][2] # start time
 had = 100 # start cash
 out = 0
 last = 0
-time = 1
 trade = 0
 vec = 0
-step = 1
 
 # slide data through window
 for i in range(int(size/slide)):
 	
-	# end one day
+	# end after one day
 	time = prices[offset][2]
 	if(time > start + day):
 		break
