@@ -32,7 +32,7 @@ ma = 10 # moving average
 prices, plain, avg = get_data(ma) # prices data
 size = len(plain)
 day = 1440*60
-offset = 0
+offset = 0 # data offset
 start = prices[0][2] # start time
 
 # virtual pocket
