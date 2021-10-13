@@ -101,7 +101,6 @@ for i in range(int(size/slide)):
 	#plt.clf()
 	#plt.plot(plain[offset:offset+slide], color='blue', linewidth=0.5);
 	#plt.plot(avg[offset:offset+slide], color='red', linewidth=0.5);
-	#plt.plot(idx, xy, color='black', linewidth=0.5);
 	#plt.show()
 
 	# slide data
