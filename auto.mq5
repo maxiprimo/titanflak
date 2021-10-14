@@ -108,7 +108,7 @@ CList ticks;
 double GetMean()
 {
    double sum=0;
-   for(int i=ticks.Total()-1; i>=0; i--){
+   for(int i=0; i<ticks.Total(); i++){
       sum += ((TickObject*)ticks.GetNodeAtIndex(i)).avg;
    }
    return sum/slide;
