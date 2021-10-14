@@ -28,7 +28,7 @@ void OnDeinit(const int reason)
 double LotSize(double Ask, double Percent)
 {
    double required_margin = 0;
-   if(OrderCalcMargin(ORDER_TYPE_BUY,Symbol(),1.0,Ask,required_margin)) // Calculate margin required on 1 lot
+   if(OrderCalcMargin(ORDER_TYPE_BUY,Symbol(),1.0,Ask,required_margin))
    {
      if(NormalizeDouble(AccountInfoDouble(ACCOUNT_FREEMARGIN)/required_margin,2))
      {
@@ -60,8 +60,6 @@ double OpenOrder(int OrderType, double Price, double Lot)
 double CloseOrder(double Price)
 {
   {
-   MqlTradeRequest request;
-   MqlTradeResult  result;
    int total=PositionsTotal();
    for(int i=total-1; i>=0; i--)
      {
@@ -71,10 +69,10 @@ double CloseOrder(double Price)
       ulong  magic=PositionGetInteger(POSITION_MAGIC);
       double volume=PositionGetDouble(POSITION_VOLUME);
       ENUM_POSITION_TYPE type=(ENUM_POSITION_TYPE)PositionGetInteger(POSITION_TYPE);
+      MqlTradeRequest request={};
+      MqlTradeResult  result={};
       if(magic==EXPERT_MAGIC)
       {
-         ZeroMemory(request);
-         ZeroMemory(result);
          request.action   =TRADE_ACTION_DEAL;
          request.position =position_ticket;
          request.symbol   =position_symbol;
@@ -92,7 +90,7 @@ double CloseOrder(double Price)
            request.type =ORDER_TYPE_BUY;
          }
          if(!OrderSend(request,result)){
-            PrintFormat("OrderSend error %d",GetLastError());  // if unable to send the request, output the error code
+            PrintFormat("OrderSend error %d",GetLastError());
             return -1;
          } 
          return result.price;
