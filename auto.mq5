@@ -3,10 +3,10 @@
 class TickObject : public CObject
 {
 public:
-   long time;
+   int time;
    double avg;
    TickObject(void){}
-   TickObject(long time, double avg){
+   TickObject(int time, double avg){
       this.time = time;
       this.avg = avg;
    }
