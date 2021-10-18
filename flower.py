@@ -107,7 +107,6 @@ for j in range(int(size/slide)):
 	#plt.plot(bid[offset:offset+slide], color='blue', linewidth=0.5);
 	#plt.plot(ask[offset:offset+slide], color='red', linewidth=0.5);
 	#plt.plot(mid_arr[offset:offset+slide], color='black', linewidth=0.5)
-	#plt.plot(avg_arr[offset:offset+slide], color='blue', linewidth=0.5)
 	#plt.show()
 
 	# slide data
