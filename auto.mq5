@@ -1,18 +1,4 @@
 
-#include <Arrays\List.mqh>
-class TickObject : public CObject
-{
-public:
-   int time;
-   double avg;
-   TickObject(void){}
-   TickObject(int time, double avg){
-      this.time = time;
-      this.avg = avg;
-   }
-   ~TickObject(void){}
-};
-
 int EXPERT_MAGIC = 9977;
 
 int OnInit()
@@ -57,82 +43,31 @@ double OpenOrder(int OrderType, double Price, double Lot)
    return result.price;
 }
 
-double CloseOrder(double Price)
+#include <Trade\Trade.mqh>
+CTrade m_trade;
+void ClosePosition()
 {
-  {
-   int total=PositionsTotal();
-   for(int i=total-1; i>=0; i--)
-     {
+   for(int i=PositionsTotal()-1; i>=0; i--){
       ulong  position_ticket=PositionGetTicket(i);
-      string position_symbol=PositionGetString(POSITION_SYMBOL);
-      int    digits=(int)SymbolInfoInteger(position_symbol,SYMBOL_DIGITS);
-      ulong  magic=PositionGetInteger(POSITION_MAGIC);
-      double volume=PositionGetDouble(POSITION_VOLUME);
-      ENUM_POSITION_TYPE type=(ENUM_POSITION_TYPE)PositionGetInteger(POSITION_TYPE);
-      MqlTradeRequest request={};
-      MqlTradeResult  result={};
-      if(magic==EXPERT_MAGIC)
-      {
-         request.action   =TRADE_ACTION_DEAL;
-         request.position =position_ticket;
-         request.symbol   =position_symbol;
-         request.volume   =volume;
-         request.deviation=1;
-         request.magic    =EXPERT_MAGIC;
-         if(type==POSITION_TYPE_BUY)
-         { 
-           request.price=Price;
-           request.type =ORDER_TYPE_SELL;
-         }
-         else if(type==POSITION_TYPE_SELL)
-         {
-           request.price=Price;
-           request.type =ORDER_TYPE_BUY;
-         }
-         if(!OrderSend(request,result)){
-            PrintFormat("OrderSend error %d",GetLastError());
-            return -1;
-         } 
-         return result.price;
-       }
-     }
-  }
-  return -1;
-}
-
-const int slide=10;
-CList ticks;
-
-double GetMean()
-{
-   double sum=0;
-   for(int i=0; i<ticks.Total(); i++){
-      sum += ((TickObject*)ticks.GetNodeAtIndex(i)).avg;
+      m_trade.PositionClose(position_ticket);
    }
-   return sum/slide;
 }
 
-double last_mean = 0;
 int dir = 0;
 bool active = false;
+double last = 0;
 void OnTick()
 {
    int time = (int)TimeCurrent();
    double bid = SymbolInfoDouble(Symbol(), SYMBOL_BID);
    double ask = SymbolInfoDouble(Symbol(), SYMBOL_ASK);
    double avg = ((ask-bid)/2)+bid;
-   TickObject* tick = new TickObject(time, avg);
-   ticks.Add(tick);
-   if(ticks.Total()<slide)
-      return;
-   double curr_mean = GetMean();
-   ticks.Delete(0);
-   if(last_mean == 0){
-      last_mean = curr_mean;
+   if(last==0){
+      last = avg;
       return;
    }
-   bool buy = curr_mean > last_mean;
-   bool sell = curr_mean < last_mean;
+   bool buy = avg > last && (avg - last) > 0.1;
+   bool sell = avg < last && (last - avg) > 0.1;
    bool finish = true;
    if(buy && dir <= 0)
       dir = 1;
@@ -141,18 +76,20 @@ void OnTick()
    else
       finish = false;
    if(active && finish){
-      if(sell)
-         CloseOrder(bid);
-      else if(buy)
-         CloseOrder(ask);
+      if(sell){
+         ClosePosition();
+      }else if(buy){
+         ClosePosition();
+      }
       active = false;
    }
    if(!active && (buy || sell)){
-      if(buy)
-         OpenOrder(ORDER_TYPE_BUY, ask, LotSize(ask, 0.1));
-      else if(sell)
-         OpenOrder(ORDER_TYPE_SELL, bid, LotSize(bid, 0.1));
+      if(buy){
+         OpenOrder(ORDER_TYPE_BUY, ask, LotSize(bid, 0.5));
+      }else if(sell){
+         OpenOrder(ORDER_TYPE_SELL, bid, LotSize(bid, 0.5));
+      }
       active = true;
    }
-   last_mean = curr_mean;
+   last = avg;
 }
