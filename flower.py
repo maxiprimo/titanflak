@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-# get bid/ask prices, bid-ask/middle price and bid-ask/middle moving average
+# get bid/ask prices and bid-ask/middle price
 def get_data(ma):
 	f = open('coin123.txt')
 	time_arr = []
@@ -54,7 +54,7 @@ for j in range(int(size/slide)):
 	# draw reset
 	plt.clf()
 
-	# iterate ask/bid middle average prices flow
+	# iterate ask/bid-middle prices flow
 	for i in range(slide):
 		
 		time = time_arr[offset+i]
