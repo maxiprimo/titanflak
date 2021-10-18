@@ -85,7 +85,7 @@ void OnTick()
    }
    if(!active && (buy || sell)){
       if(buy){
-         OpenOrder(ORDER_TYPE_BUY, ask, LotSize(bid, 0.5));
+         OpenOrder(ORDER_TYPE_BUY, ask, LotSize(ask, 0.5));
       }else if(sell){
          OpenOrder(ORDER_TYPE_SELL, bid, LotSize(bid, 0.5));
       }
