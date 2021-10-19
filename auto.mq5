@@ -1,6 +1,4 @@
 
-int EXPERT_MAGIC = 9977;
-
 int OnInit()
 {
    return(INIT_SUCCEEDED);
@@ -11,10 +9,10 @@ void OnDeinit(const int reason)
 
 }
 
-double LotSize(double Ask, double Percent)
+double LotSize(ENUM_ORDER_TYPE OrderType, double Ask, double Percent)
 {
    double required_margin = 0;
-   if(OrderCalcMargin(ORDER_TYPE_BUY,Symbol(),1.0,Ask,required_margin))
+   if(OrderCalcMargin(OrderType,Symbol(),1.0,Ask,required_margin))
    {
      if(NormalizeDouble(AccountInfoDouble(ACCOUNT_FREEMARGIN)/required_margin,2))
      {
@@ -25,31 +23,18 @@ double LotSize(double Ask, double Percent)
    return -1;
 }
 
-double OpenOrder(int OrderType, double Price, double Lot)
-{
-   MqlTradeRequest request={};
-   request.action = TRADE_ACTION_DEAL;
-   request.magic = EXPERT_MAGIC;
-   request.symbol = Symbol();
-   request.type = OrderType;
-   request.price = Price;
-   request.deviation = 1;
-   request.volume = Lot;
-   MqlTradeResult result={};
-   if(!OrderSend(request,result)){
-      PrintFormat("OrderSend error %d",GetLastError());
-      return -1;
-   }
-   return result.price;
-}
-
 #include <Trade\Trade.mqh>
 CTrade m_trade;
+
+bool OpenOrder(ENUM_ORDER_TYPE OrderType, double Price, double Lot)
+{
+   return m_trade.PositionOpen(Symbol(), OrderType, Lot, Price, 0, 0, NULL);
+}
+
 void ClosePosition()
 {
    for(int i=PositionsTotal()-1; i>=0; i--){
-      ulong  position_ticket=PositionGetTicket(i);
-      m_trade.PositionClose(position_ticket);
+      m_trade.PositionClose(PositionGetTicket(i));
    }
 }
 
@@ -76,18 +61,14 @@ void OnTick()
    else
       finish = false;
    if(active && finish){
-      if(sell){
-         ClosePosition();
-      }else if(buy){
-         ClosePosition();
-      }
+      ClosePosition();
       active = false;
    }
    if(!active && (buy || sell)){
       if(buy){
-         OpenOrder(ORDER_TYPE_BUY, ask, LotSize(ask, 0.5));
+         OpenOrder(ORDER_TYPE_BUY, ask, LotSize(ORDER_TYPE_BUY, ask, 0.99));
       }else if(sell){
-         OpenOrder(ORDER_TYPE_SELL, bid, LotSize(bid, 0.5));
+         OpenOrder(ORDER_TYPE_SELL, bid, LotSize(ORDER_TYPE_SELL, bid, 0.99));
       }
       active = true;
    }
