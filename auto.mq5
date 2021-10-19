@@ -44,6 +44,8 @@ double last = 0;
 void OnTick()
 {
    int time = (int)TimeCurrent();
+   double bid = SymbolInfoDouble(Symbol(), SYMBOL_BID);
+   double ask = SymbolInfoDouble(Symbol(), SYMBOL_ASK);
    double avg = ((ask-bid)/2)+bid;
    if(last==0){
       last = avg;
@@ -63,8 +65,6 @@ void OnTick()
       active = false;
    }
    if(!active && (buy || sell)){
-      double bid = SymbolInfoDouble(Symbol(), SYMBOL_BID);
-      double ask = SymbolInfoDouble(Symbol(), SYMBOL_ASK);
       if(buy){
          OpenOrder(ORDER_TYPE_BUY, ask, LotSize(ORDER_TYPE_BUY, ask, 0.99));
       }else if(sell){
