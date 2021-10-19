@@ -27,13 +27,12 @@ def get_data(ma):
 	return time_arr[:], bid_arr[:], ask_arr[:], mid_arr[:]
 
 ma = 10 # moving average
-slide = 900 # sliding window used to draw
+slide = 1000 # sliding window used to draw
 time_arr, bid_arr, ask_arr, mid_arr = get_data(ma) # price data
 size = len(time_arr)
 day = 1440*60
 offset = 1 # data offset
 start = time_arr[offset] # start time
-grow = 150
 
 # virtual pocket
 had = 100 # start cash
