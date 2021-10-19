@@ -51,8 +51,8 @@ void OnTick()
       last = avg;
       return;
    }
-   bool buy = avg > last;
-   bool sell = avg < last;
+   bool buy = avg > last && avg - last > 0.1;
+   bool sell = avg < last && last - avg > 0.1;
    bool finish = true;
    if(buy && dir <= 0)
       dir = 1;
