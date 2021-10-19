@@ -48,7 +48,7 @@ for j in range(int(size/slide)):
 	
 	# end after one day
 	time = time_arr[offset]
-	if(time > start + day):
+	if(time > start + slide):
 		break
 
 	# draw reset
