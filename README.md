@@ -1,4 +1,4 @@
-# trillionflak
+# titanflak
 Easy Ultimate Capital.
 
 Use Bid/Ask-Middle Price And Flow The Exchange Wave.
