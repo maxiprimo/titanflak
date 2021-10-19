@@ -1,8 +1,8 @@
 # titanflak
 Easy Ultimate Capital.
 
-Use Bid/Ask-Middle Price And Flow The Exchange Wave.
+Use Bid/Ask-Middle Price And Flow The Exchange.
 
-Missing A BTC/EUR CFD Online Broker Digital Auto Trader Integration On Big Leverage, No Commission, No Spreed And High Value Volatility.
+IMPORTANT: Miss The BTC/EUR CFD Online Broker Digital Auto Trader Integration With High-Leverage, No-Commission, No-Spreed.
 
 http://www.linkedin.com/in/ms84
