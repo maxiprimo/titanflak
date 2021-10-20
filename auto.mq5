@@ -4,7 +4,7 @@
 
 input double INPUT_TradeLotSize = 0.5; // Trade Capital Usage
 input double INPUT_MaxTradeVolume = 45.0; // Maximum Trade Volume
-input int INPUT_MaxCapital = 100000; // Maximum Capital
+input int INPUT_MaxCapital = 100000; // Maximum Capital In Currency
 input int INPUT_MaxRunMinutes = 1440; // Maximal Minutes To Run
 
 int max_error = 5;
@@ -112,7 +112,6 @@ void OnTick()
    }
    double balance = AccountInfoDouble(ACCOUNT_BALANCE);
    if(balance >= INPUT_MaxCapital){
-      ClosePosition();
       ExpertRemove();
    }
    if(!active && (buy || sell)){
