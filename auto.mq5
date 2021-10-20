@@ -1,12 +1,27 @@
+#property copyright "2009-2017, MetaQuotes Software Corp."
+#property link      "http://www.mql5.com"
+#property version   "1.00"
 
-int OnInit()
-{
-   return(INIT_SUCCEEDED);
-}
+input double INPUT_TradeLotSize = 0.5; // Trade Capital Usage
+input double INPUT_MaxTradeVolume = 45.0; // Maximum Trade Volume
+input int INPUT_MaxCapital = 100000; // Maximum Capital
+input int INPUT_MaxRunMinutes = 1440; // Maximal Minutes To Run
 
-void OnDeinit(const int reason)
-{
+int max_error = 5;
+int error_count = 0;
 
+bool CheckError(bool NoError){
+   if(!NoError){
+      error_count++;
+      if(error_count >= max_error){
+         ClosePosition();
+         ExpertRemove();
+         return true;
+      }
+   }else{
+      error_count = 0;
+   }
+   return !NoError;
 }
 
 double LotSize(ENUM_ORDER_TYPE OrderType, double Ask, double Percent)
@@ -28,22 +43,50 @@ CTrade m_trade;
 
 bool OpenOrder(ENUM_ORDER_TYPE OrderType, double Price, double Lot)
 {
-   return m_trade.PositionOpen(Symbol(), OrderType, Lot, Price, 0, 0, NULL);
+   bool NoError = m_trade.PositionOpen(Symbol(), OrderType, Lot, Price, 0, 0, NULL);
+   return NoError;
 }
 
-void ClosePosition()
+bool ClosePosition()
 {
+   bool NoError = true;
    for(int i=PositionsTotal()-1; i>=0; i--){
-      m_trade.PositionClose(PositionGetTicket(i));
+      if(!m_trade.PositionClose(PositionGetTicket(i))){
+         NoError = false;
+      }
    }
+   return NoError;
+}
+
+int file=0;
+int OnInit()
+{
+   ClosePosition();
+   file = FileOpen("market.txt", FILE_WRITE, "", CP_UTF8);
+   return(INIT_SUCCEEDED);
+}
+
+void OnDeinit(const int reason)
+{
+   ClosePosition();
+   FileFlush(file);
+   FileClose(file);
 }
 
 int dir = 0;
 bool active = false;
 double last = 0;
+int start = 0;
 void OnTick()
 {
    int time = (int)TimeCurrent();
+   if(start == 0){
+      start = time;
+   }
+   if(time >= start + (INPUT_MaxRunMinutes*60)){
+      ClosePosition();
+      ExpertRemove();
+   }
    double bid = SymbolInfoDouble(Symbol(), SYMBOL_BID);
    double ask = SymbolInfoDouble(Symbol(), SYMBOL_ASK);
    double avg = ((ask-bid)/2)+bid;
@@ -51,6 +94,8 @@ void OnTick()
       last = avg;
       return;
    }
+   FileWriteString(file, time+"|"+bid+"|"+ask+"\n");
+   FileFlush(file);
    bool buy = avg > last && avg - last > 0.1;
    bool sell = avg < last && last - avg > 0.1;
    bool finish = true;
@@ -61,16 +106,24 @@ void OnTick()
    else
       finish = false;
    if(active && finish){
+      if(!CheckError(ClosePosition())){
+         active = false;
+      }
+   }
+   double balance = AccountInfoDouble(ACCOUNT_BALANCE);
+   if(balance >= INPUT_MaxCapital){
       ClosePosition();
-      active = false;
+      ExpertRemove();
    }
    if(!active && (buy || sell)){
-      if(buy){
-         OpenOrder(ORDER_TYPE_BUY, ask, LotSize(ORDER_TYPE_BUY, ask, 0.99));
-      }else if(sell){
-         OpenOrder(ORDER_TYPE_SELL, bid, LotSize(ORDER_TYPE_SELL, bid, 0.99));
+      ENUM_ORDER_TYPE type = (buy?ORDER_TYPE_BUY:ORDER_TYPE_SELL);
+      double price = (buy?ask:bid);
+      double lot = LotSize(type, price, INPUT_TradeLotSize);
+      if(lot>INPUT_MaxTradeVolume)
+         lot = INPUT_MaxTradeVolume;
+      if(!CheckError(OpenOrder(type, price, lot))){
+         active = true;
       }
-      active = true;
    }
    last = avg;
 }
