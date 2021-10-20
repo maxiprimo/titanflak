@@ -1,6 +1,6 @@
-#property copyright "2009-2017, MetaQuotes Software Corp."
-#property link      "http://www.mql5.com"
-#property version   "1.00"
+#property copyright "MaxiPrimo"
+#property link      "http://www.linkedin.com/in/ms84"
+#property version   "1.0"
 
 input double INPUT_TradeLotSize = 0.5; // Trade Capital Usage
 input double INPUT_MaxTradeVolume = 45.0; // Maximum Trade Volume
