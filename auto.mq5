@@ -15,9 +15,8 @@ bool CheckError(bool NoError){
    if(!NoError){
       error_count++;
       if(error_count >= max_error){
-         ClosePosition();
          ExpertRemove();
-         return true;
+         return !NoError;
       }
    }else{
       error_count = 0;
