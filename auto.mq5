@@ -1,4 +1,5 @@
-#property copyright "MaxiPrimo"
+#property description "Easy Ultimate Capital. Slide Crypto Exchange Wave. High-Leveragge, No-Commssion, No-Spread."
+#property copyright "MaxiPrimo 2021"
 #property link      "http://www.linkedin.com/in/ms84"
 #property version   "1.0"
 
