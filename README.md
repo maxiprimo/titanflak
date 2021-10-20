@@ -1,8 +1,4 @@
 # titanflak
-Easy Ultimate Capital.
-
-Use Bid/Ask-Middle Price And Flow The Exchange.
-
-IMPORTANT: Miss The BTC/EUR CFD Online Broker With High-Leverage, No-Commission, No-Spread.
+Easy Ultimate Capital. Slide Crypto Exchange Wave. High-Leveragge, No-Commssion, No-Spread.
 
 http://www.linkedin.com/in/ms84
