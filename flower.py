@@ -6,7 +6,7 @@ import pandas as pd
 
 # get bid/ask prices and bid-ask/middle price
 def get_data(ma):
-	f = open('coin123.txt')
+	f = open('market.txt')
 	time_arr = []
 	bid_arr = []
 	ask_arr = []
@@ -24,19 +24,24 @@ def get_data(ma):
 	    ask_arr.append(ask)
 	    mid_arr.append(((ask-bid)/2)+bid)
 	f.close()
-	return time_arr[:], bid_arr[:], ask_arr[:], mid_arr[:]
+	avg_arr = pd.DataFrame(data=mid_arr, columns=["Avg"]).rolling(ma).mean().values;
+	return time_arr[ma:], bid_arr[ma:], ask_arr[ma:], mid_arr[ma:], avg_arr[ma:]
 
-ma = 10 # moving average
+ma = 100 # moving average
 slide = 1000 # sliding window used to draw
-time_arr, bid_arr, ask_arr, mid_arr = get_data(ma) # price data
+time_arr, bid_arr, ask_arr, mid_arr, avg_arr = get_data(ma) # price data
 size = len(time_arr)
 day = 1440*60
 offset = 1 # data offset
 start = time_arr[offset] # start time
+ma_list = []
+ma_curr = 0
+ma_last = 0
+ma_arr = []
 
 # virtual pocket
 had = 100 # start cash
-leverage = 50 # market leverage
+leverage = 100 # market leverage
 out = 0
 last = 0
 trade = 0
@@ -56,15 +61,31 @@ for j in range(int(size/slide)):
 	# iterate ask/bid-middle prices flow
 	for i in range(slide):
 		
+		# moving average
+		ma_list.append(mid_arr[offset+i])
+		if(len(ma_list)<=ma):
+			ma_arr.append(mid_arr[i])
+			continue
+		ma_list = ma_list[1:]
+		sum = 0
+		for s in range(ma):
+			sum = sum + ma_list[s]
+		ma_curr = sum/ma
+		if(ma_last == 0):
+			ma_last = ma_curr
+			continue
+		ma_arr.append(ma_curr)
+
 		time = time_arr[offset+i]
-		avg_p = mid_arr[offset+i] # current
-		avg_p_last = mid_arr[offset+i-1] # last
+
 		bid = bid_arr[offset+i]
 		ask = ask_arr[offset+i]
 
 		# direction
-		buy = avg_p > avg_p_last and avg_p - avg_p_last > 0.1
-		sell = avg_p < avg_p_last and avg_p_last - avg_p > 0.1
+		buy = ma_curr > ma_last and ma_curr - ma_last > 0.1
+		sell = ma_curr < ma_last and ma_last - ma_curr > 0.1
+
+		ma_last = ma_curr
 
 		# hold or switch direction
 		finish = True
@@ -103,9 +124,11 @@ for j in range(int(size/slide)):
 		#	print("none.")
 
 	# draw window values
-	#plt.plot(bid[offset:offset+slide], color='blue', linewidth=0.5);
-	#plt.plot(ask[offset:offset+slide], color='red', linewidth=0.5);
+	#plt.plot(bid_arr[offset:offset+slide], color='blue', linewidth=0.5);
+	#plt.plot(ask_arr[offset:offset+slide], color='red', linewidth=0.5);
 	#plt.plot(mid_arr[offset:offset+slide], color='black', linewidth=0.5)
+	#plt.plot(avg_arr[offset:offset+slide], color='green', linewidth=0.5)
+	#plt.plot(ma_arr[offset:offset+slide], color='orange', linewidth=0.5)
 	#plt.show()
 
 	# slide data
