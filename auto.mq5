@@ -132,8 +132,6 @@ void OnTick()
    }
    FileWriteString(file, time+"|"+bid+"|"+ask+"\n");
    FileFlush(file);
-   //bool buy = avg > last && avg - last > 0.1;
-   //bool sell = avg < last && last - avg > 0.1;
    bool buy = curr > mean && curr - mean > 0.1;
    bool sell = curr < mean && mean - curr > 0.1;
    mean = curr;
