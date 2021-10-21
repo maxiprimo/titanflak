@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 # get bid/ask prices and bid-ask/middle price
-def get_data(ma):
+def get_data():
 	f = open('market.txt')
 	time_arr = []
 	bid_arr = []
@@ -24,20 +24,19 @@ def get_data(ma):
 	    ask_arr.append(ask)
 	    mid_arr.append(((ask-bid)/2)+bid)
 	f.close()
-	avg_arr = pd.DataFrame(data=mid_arr, columns=["Avg"]).rolling(ma).mean().values;
-	return time_arr[ma:], bid_arr[ma:], ask_arr[ma:], mid_arr[ma:], avg_arr[ma:]
+	return time_arr, bid_arr, ask_arr, mid_arr
 
 ma = 100 # moving average
 slide = 1000 # sliding window used to draw
-time_arr, bid_arr, ask_arr, mid_arr, avg_arr = get_data(ma) # price data
+time_arr, bid_arr, ask_arr, mid_arr = get_data() # price data
 size = len(time_arr)
 day = 1440*60
 offset = 1 # data offset
 start = time_arr[offset] # start time
+ma_arr = []
 ma_list = []
 ma_curr = 0
 ma_last = 0
-ma_arr = []
 
 # virtual pocket
 had = 100 # start cash
@@ -77,7 +76,6 @@ for j in range(int(size/slide)):
 		ma_arr.append(ma_curr)
 
 		time = time_arr[offset+i]
-
 		bid = bid_arr[offset+i]
 		ask = ask_arr[offset+i]
 
@@ -127,7 +125,6 @@ for j in range(int(size/slide)):
 	#plt.plot(bid_arr[offset:offset+slide], color='blue', linewidth=0.5);
 	#plt.plot(ask_arr[offset:offset+slide], color='red', linewidth=0.5);
 	#plt.plot(mid_arr[offset:offset+slide], color='black', linewidth=0.5)
-	#plt.plot(avg_arr[offset:offset+slide], color='green', linewidth=0.5)
 	#plt.plot(ma_arr[offset:offset+slide], color='orange', linewidth=0.5)
 	#plt.show()
 
