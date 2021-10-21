@@ -16,13 +16,39 @@ bool CheckError(bool NoError){
       error_count++;
       if(error_count >= max_error){
          ExpertRemove();
-         return !NoError;
+         return NoError;
       }
    }else{
       error_count = 0;
    }
-   return !NoError;
+   return NoError;
 }
+
+#include <Object.mqh>
+class TickObject : public CObject
+{
+public:
+   int time;
+   double avg;
+   TickObject(int time, double avg){
+      this.time = time;
+      this.avg = avg;
+   }
+};
+
+
+#include <Arrays\List.mqh>
+CList list;
+int ma = 100;
+double mean = 0;
+double Mean(){
+   double sum = 0;
+   for(int i=0; i<list.Total(); i++){
+      sum += ((TickObject*)list.GetNodeAtIndex(i)).avg;
+   }
+   return sum/list.Total();
+}
+
 
 double LotSize(ENUM_ORDER_TYPE OrderType, double Ask, double Percent)
 {
@@ -94,10 +120,23 @@ void OnTick()
       last = avg;
       return;
    }
+   list.Add(new TickObject(time, avg));
+   if(list.Total()<=ma){
+      return;
+   }
+   list.Delete(0);
+   double curr = Mean();
+   if(mean == 0){
+      mean = curr;
+      return;
+   }
    FileWriteString(file, time+"|"+bid+"|"+ask+"\n");
    FileFlush(file);
-   bool buy = avg > last && avg - last > 0.1;
-   bool sell = avg < last && last - avg > 0.1;
+   //bool buy = avg > last && avg - last > 0.1;
+   //bool sell = avg < last && last - avg > 0.1;
+   bool buy = curr > mean && curr - mean > 0.1;
+   bool sell = curr < mean && mean - curr > 0.1;
+   mean = curr;
    bool finish = true;
    if(buy && dir <= 0)
       dir = 1;
@@ -106,7 +145,7 @@ void OnTick()
    else
       finish = false;
    if(active && finish){
-      if(!CheckError(ClosePosition())){
+      if(CheckError(ClosePosition())){
          active = false;
       }
    }
@@ -120,7 +159,7 @@ void OnTick()
       double lot = LotSize(type, price, INPUT_TradeLotSize);
       if(lot>INPUT_MaxTradeVolume)
          lot = INPUT_MaxTradeVolume;
-      if(!CheckError(OpenOrder(type, price, lot))){
+      if(CheckError(OpenOrder(type, price, lot))){
          active = true;
       }
    }
