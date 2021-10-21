@@ -3,11 +3,11 @@
 #property link      "http://www.linkedin.com/in/ms84"
 #property version   "1.0"
 
-input double INPUT_TradeLotSize = 0.85; // Trade Capital Usage
-input double INPUT_MaxTradeVolume = 0.85; // Maximum Trade Volume
-input int INPUT_MaxCapital = 150000; // Maximum Capital In Currency
-input int INPUT_MaxRunMinutes = 1440; // Maximal Minutes To Run
-input int INPUT_CapitalFallback = 0.35; // Maximal Capital Lost Fallback
+input double INPUT_TradeLotSize = 0.9; // Trade Capital Usage
+input double INPUT_MaxTradeVolume = 47.5; // Maximum Trade Volume
+input int INPUT_MaxCapital = 100*1000*1000; // Maximum Capital In Currency
+input int INPUT_MaxRunMinutes = 1440*7; // Maximal Minutes To Run
+input double INPUT_CapitalFallback = 0.35; // Maximal Capital Lost Fallback
 
 int max_error = 5;
 int error_count = 0;
