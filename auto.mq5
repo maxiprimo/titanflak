@@ -3,10 +3,11 @@
 #property link      "http://www.linkedin.com/in/ms84"
 #property version   "1.0"
 
-input double INPUT_TradeLotSize = 0.5; // Trade Capital Usage
-input double INPUT_MaxTradeVolume = 45.0; // Maximum Trade Volume
-input int INPUT_MaxCapital = 100000; // Maximum Capital In Currency
+input double INPUT_TradeLotSize = 0.85; // Trade Capital Usage
+input double INPUT_MaxTradeVolume = 0.85; // Maximum Trade Volume
+input int INPUT_MaxCapital = 150000; // Maximum Capital In Currency
 input int INPUT_MaxRunMinutes = 1440; // Maximal Minutes To Run
+input int INPUT_CapitalFallback = 0.35; // Maximal Capital Lost Fallback
 
 int max_error = 5;
 int error_count = 0;
@@ -41,7 +42,7 @@ public:
 CList list;
 int ma = 100;
 double mean = 0;
-double Mean(){
+double GetMean(){
    double sum = 0;
    for(int i=0; i<list.Total(); i++){
       sum += ((TickObject*)list.GetNodeAtIndex(i)).avg;
@@ -103,6 +104,7 @@ int dir = 0;
 bool active = false;
 double last = 0;
 int start = 0;
+double capital = 0;
 void OnTick()
 {
    int time = (int)TimeCurrent();
@@ -116,22 +118,21 @@ void OnTick()
    double bid = SymbolInfoDouble(Symbol(), SYMBOL_BID);
    double ask = SymbolInfoDouble(Symbol(), SYMBOL_ASK);
    double avg = ((ask-bid)/2)+bid;
+   FileWriteString(file, time+"|"+bid+"|"+ask+"\n");
+   FileFlush(file);
    if(last==0){
       last = avg;
       return;
    }
    list.Add(new TickObject(time, avg));
-   if(list.Total()<=ma){
+   if(list.Total()<=ma)
       return;
-   }
    list.Delete(0);
-   double curr = Mean();
+   double curr = GetMean();
    if(mean == 0){
       mean = curr;
       return;
    }
-   FileWriteString(file, time+"|"+bid+"|"+ask+"\n");
-   FileFlush(file);
    bool buy = curr > mean && curr - mean > 0.1;
    bool sell = curr < mean && mean - curr > 0.1;
    mean = curr;
@@ -143,23 +144,24 @@ void OnTick()
    else
       finish = false;
    if(active && finish){
-      if(CheckError(ClosePosition())){
+      if(CheckError(ClosePosition()))
          active = false;
-      }
    }
    double balance = AccountInfoDouble(ACCOUNT_BALANCE);
-   if(balance >= INPUT_MaxCapital){
+   if(balance >= INPUT_MaxCapital)
       ExpertRemove();
-   }
+   if(capital == 0)
+      capital = balance;
+   if(balance <= capital * INPUT_CapitalFallback)
+      ExpertRemove();
    if(!active && (buy || sell)){
       ENUM_ORDER_TYPE type = (buy?ORDER_TYPE_BUY:ORDER_TYPE_SELL);
       double price = (buy?ask:bid);
       double lot = LotSize(type, price, INPUT_TradeLotSize);
       if(lot>INPUT_MaxTradeVolume)
          lot = INPUT_MaxTradeVolume;
-      if(CheckError(OpenOrder(type, price, lot))){
+      if(CheckError(OpenOrder(type, price, lot)))
          active = true;
-      }
    }
    last = avg;
 }
