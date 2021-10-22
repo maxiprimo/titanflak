@@ -1,12 +1,12 @@
-#property description "Easy Ultimate Capital. Slide Crypto Exchange Wave. High-Leverage, No-Commission, No-Spread."
+#property description "Easy Ultimate Capital. Slide Exchange Wave. High-Leverage, No-Commission, Low-Spread."
 #property copyright "MaxiPrimo 2021"
 #property link      "http://www.linkedin.com/in/ms84"
-#property version   "1.0"
+#property version   "1.1"
 
-input double INPUT_TradeLotSize = 0.9; // Trade Capital Usage
+input double INPUT_TradeLotSize = 0.5; // Trade Capital Usage
 input double INPUT_MaxTradeVolume = 47.5; // Maximum Trade Volume
-input int INPUT_MaxCapital = 100*1000*1000; // Maximum Capital In Currency
-input int INPUT_MaxRunMinutes = 1440*7; // Maximal Minutes To Run
+input int INPUT_MaxCapital = 10*1000; // Maximum Capital In Currency
+input int INPUT_MaxRunMinutes = 10000; // Maximal Minutes To Run
 input double INPUT_CapitalFallback = 0.35; // Maximal Capital Lost Fallback
 
 int max_error = 5;
@@ -16,7 +16,7 @@ bool CheckError(bool NoError){
    if(!NoError){
       error_count++;
       if(error_count >= max_error){
-         ExpertRemove();
+         ExitTrader("Max Error.");
          return NoError;
       }
    }else{
@@ -25,42 +25,19 @@ bool CheckError(bool NoError){
    return NoError;
 }
 
-#include <Object.mqh>
-class TickObject : public CObject
-{
-public:
-   int time;
-   double avg;
-   TickObject(int time, double avg){
-      this.time = time;
-      this.avg = avg;
-   }
-};
-
-
-#include <Arrays\List.mqh>
-CList list;
-int ma = 100;
-double mean = 0;
-double GetMean(){
-   double sum = 0;
-   for(int i=0; i<list.Total(); i++){
-      sum += ((TickObject*)list.GetNodeAtIndex(i)).avg;
-   }
-   return sum/list.Total();
+void ExitTrader(string Msg){
+   ClosePosition();
+   Print("Exit Trader: "+Msg);
+   ExpertRemove();
 }
 
-
-double LotSize(ENUM_ORDER_TYPE OrderType, double Ask, double Percent)
+double LotSize(ENUM_ORDER_TYPE OrderType, double Price, double Percent)
 {
    double required_margin = 0;
-   if(OrderCalcMargin(OrderType,Symbol(),1.0,Ask,required_margin))
-   {
-     if(NormalizeDouble(AccountInfoDouble(ACCOUNT_FREEMARGIN)/required_margin,2))
-     {
-       double trade_volume=NormalizeDouble((AccountInfoDouble(ACCOUNT_FREEMARGIN)/required_margin)*Percent,2);
+   if(OrderCalcMargin(OrderType,Symbol(),1.0,Price,required_margin)){
+     double trade_volume=NormalizeDouble((AccountInfoDouble(ACCOUNT_FREEMARGIN)/required_margin)*Percent,2);
+     if(trade_volume)
        return trade_volume;
-     }
    }
    return -1;
 }
@@ -85,57 +62,49 @@ bool ClosePosition()
    return NoError;
 }
 
+void PrepareBuffer(int Index, double& Array[]){
+   ZeroMemory(Array);
+   CopyBuffer(handle, Index, 0, 3, Array);
+   ArraySetAsSeries(Array, true);
+}
+
 int file=0;
+int handle=0;
 int OnInit()
 {
    ClosePosition();
-   file = FileOpen("market.txt", FILE_WRITE, "", CP_UTF8);
+   file = FileOpen("market.txt", FILE_WRITE|FILE_TXT, "", CP_UTF8);
+   handle = iCustom(Symbol(), PERIOD_CURRENT, "binarywave");
    return(INIT_SUCCEEDED);
 }
 
 void OnDeinit(const int reason)
 {
-   ClosePosition();
    FileFlush(file);
    FileClose(file);
+   ExitTrader("Unload.");
 }
 
 int dir = 0;
 bool active = false;
-double last = 0;
 int start = 0;
 double capital = 0;
 void OnTick()
 {
    int time = (int)TimeCurrent();
-   if(start == 0){
+   if(start == 0)
       start = time;
-   }
-   if(time >= start + (INPUT_MaxRunMinutes*60)){
-      ClosePosition();
-      ExpertRemove();
-   }
+   if(time >= start + (INPUT_MaxRunMinutes*60))
+      ExitTrader("Run Time Ended.");
    double bid = SymbolInfoDouble(Symbol(), SYMBOL_BID);
    double ask = SymbolInfoDouble(Symbol(), SYMBOL_ASK);
    double avg = ((ask-bid)/2)+bid;
-   FileWriteString(file, time+"|"+bid+"|"+ask+"\n");
+   FileWriteString(file, time+"|"+bid+"|"+ask+"|"+ iLow(Symbol(), PERIOD_M1, 0)+"|"+ iHigh(Symbol(), PERIOD_M1, 0)+" \n");
    FileFlush(file);
-   if(last==0){
-      last = avg;
-      return;
-   }
-   list.Add(new TickObject(time, avg));
-   if(list.Total()<=ma)
-      return;
-   list.Delete(0);
-   double curr = GetMean();
-   if(mean == 0){
-      mean = curr;
-      return;
-   }
-   bool buy = curr > mean && curr - mean > 0.1;
-   bool sell = curr < mean && mean - curr > 0.1;
-   mean = curr;
+   double Buffer[];
+   PrepareBuffer(0, Buffer);
+   bool buy = Buffer[1] > Buffer[2];
+   bool sell = Buffer[1] < Buffer[2];
    bool finish = true;
    if(buy && dir <= 0)
       dir = 1;
@@ -149,11 +118,11 @@ void OnTick()
    }
    double balance = AccountInfoDouble(ACCOUNT_BALANCE);
    if(balance >= INPUT_MaxCapital)
-      ExpertRemove();
+      ExitTrader("Maximal Capital Reached.");
    if(capital == 0)
       capital = balance;
    if(balance <= capital * INPUT_CapitalFallback)
-      ExpertRemove();
+      ExitTrader("Capital Fallback.");
    if(!active && (buy || sell)){
       ENUM_ORDER_TYPE type = (buy?ORDER_TYPE_BUY:ORDER_TYPE_SELL);
       double price = (buy?ask:bid);
@@ -163,5 +132,4 @@ void OnTick()
       if(CheckError(OpenOrder(type, price, lot)))
          active = true;
    }
-   last = avg;
 }
