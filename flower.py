@@ -62,6 +62,7 @@ for j in range(int(size/slide)):
 		ask = ask_arr[offset+s]
 		mid = mid_arr[offset+s]
 
+		# kernel regression
 		arr = []
 		stride = 50
 		for i in range(0, slide,step):
