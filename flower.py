@@ -1,8 +1,6 @@
 import sys
 import math
 import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 
 # get bid/ask prices and bid-ask/middle price
 def get_data():
@@ -25,8 +23,7 @@ def get_data():
 	f.close()
 	return time_arr, bid_arr, ask_arr, mid_arr
 
-ma = 100 # moving average
-slide = 10000 # sliding window used to draw
+slide = 11*60*5 # sliding window used to draw
 time_arr, bid_arr, ask_arr, mid_arr = get_data() # price data
 size = len(time_arr)
 day = 1440*60
@@ -52,9 +49,24 @@ for j in range(int(size/slide)):
 	# draw reset
 	plt.clf()
 
-	step = 30
+	# get value difference
+	bid_low = 1000*1000
+	ask_high = 0
+	bidask = 0
+	highlow = 0
+	for i in range(slide):
+		idx = offset+i-slide
+		bidask = bidask + (ask_arr[idx] - bid_arr[idx])
+		if(bid_arr[idx] < bid_low):
+			bid_low = bid_arr[idx]
+		if(ask_arr[idx] > ask_high):
+			ask_high = ask_arr[idx]
+	bidask = bidask/slide
+	highlow = ask_high - bid_low
+	valuescale = bidask / highlow
 
 	# iterate ask/bid-middle prices flow
+	step = 15
 	for s in range(0, slide, step):
 		
 		time = time_arr[offset+s]
@@ -64,13 +76,15 @@ for j in range(int(size/slide)):
 
 		# kernel regression
 		arr = []
-		stride = 50
+		stride = 50 * pow(1+(1-valuescale), 3)
 		for i in range(0, slide,step):
 			sum = 0
 			sumw = 0
 			for j in range(0, slide,step):
 				w = math.exp(-(math.pow(i-j,2)/(stride*stride*2.0)))
-				sum = sum + mid_arr[offset+s-j-1]*w
+				idx = offset+s-j-1
+				value = mid_arr[idx]
+				sum = sum + value * w
 				sumw = sumw + w
 			arr.insert(0, sum/sumw)
 
@@ -79,7 +93,7 @@ for j in range(int(size/slide)):
 		sell = arr[len(arr)-1] < arr[len(arr)-2]
 
 		x = [s-5, s]
-		y = [arr[len(arr)-10], arr[len(arr)-1]]
+		y = [arr[len(arr)-2], arr[len(arr)-1]]
 
 		if(buy):
 			plt.plot(x, y, color="blue", linewidth=0.5)
@@ -123,10 +137,10 @@ for j in range(int(size/slide)):
 		#	print("none.")
 
 	# draw window values
-	plt.plot(bid_arr[offset:offset+slide], color='blue', linewidth=0.5)
-	plt.plot(ask_arr[offset:offset+slide], color='red', linewidth=0.5);
-	plt.plot(mid_arr[offset:offset+slide], color='black', linewidth=0.5)
-	plt.show()
+	#plt.plot(bid_arr[offset:offset+slide], color='blue', linewidth=0.5)
+	#plt.plot(ask_arr[offset:offset+slide], color='red', linewidth=0.5);
+	#plt.plot(mid_arr[offset:offset+slide], color='black', linewidth=0.5)
+	#plt.show()
 
 	# slide data
 	offset = offset + slide
