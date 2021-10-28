@@ -151,8 +151,6 @@ for j in range(int(size/slide)):
 				last = bid
 
 			had = 0
-		#else:
-		#	print("none.")
 		
 	# draw window values
 	plt.plot(bid_arr[offset:offset+slide], color='blue', linewidth=0.5)
