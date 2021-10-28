@@ -3,11 +3,10 @@
 # Easy Ultimate Capital. Slide The Exchange Wave. Big-Leverage, No-Commission, Low-Spread.
 # MaxiPrimo 2021
 
-import numpy as np
-import pandas as pd
-from zigzag import *
 import sys
 import math
+import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 
 # get bid/ask prices and bid-ask/middle price
