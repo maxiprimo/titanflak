@@ -82,7 +82,7 @@ for j in range(int(size/slide)):
 		mid = mid_arr[offset+s]
 
 		# trend regression
-		trend = get_kernel(int(slide/4), slide, step, mid_arr, offset+s)
+		trend = get_kernel(int(slide/2), int(slide/1), step, mid_arr, offset+s)
 		size = len(trend)
 		trend_dist = (trend[size-1] - trend[size-2])*15
 		x = [s, s]
@@ -94,9 +94,9 @@ for j in range(int(size/slide)):
 			plt.plot(x, y, color="red", linewidth=0.5)
 		"""
 		# wave regression
-		wave = get_kernel(int(slide/10), int(slide/5), step, mid_arr, offset+s)
+		wave = get_kernel(int(slide/8), int(slide/4), step, mid_arr, offset+s)
 		size = len(wave)
-		wave_dist = (wave[size-1] - wave[size-2])*15
+		wave_dist = (wave[size-1] - wave[size-2])*15*15
 		x = [s, s]
 		y = [wave[size-1], wave[size-1]+wave_dist]
 		"""
@@ -123,9 +123,9 @@ for j in range(int(size/slide)):
 			volume.pop(0)
 
 		# zig zag regression
-		zigzag = get_kernel(int(len(volume)/2), len(volume), 1, volume, len(volume))
+		zigzag = get_kernel(int(len(volume)/4), len(volume), 1, volume, len(volume))
 		size = len(zigzag)
-		zigzag_dist = (zigzag[size-1] - zigzag[size-2])*250
+		zigzag_dist = (zigzag[size-1] - zigzag[size-2])*50
 		x = [s, s]
 		y = [bid_arr[offset]-250, bid_arr[offset]-250+zigzag_dist]
 		if(zigzag_dist > 0):
@@ -136,8 +136,8 @@ for j in range(int(size/slide)):
 		last_zigzag = zigzag_dist
 
 		# decision
-		buy = False
-		sell = False
+		buy = zigzag_dist > 0
+		sell = zigzag_dist < 0
 
 		# hold or switch direction
 		finish = True
