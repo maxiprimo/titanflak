@@ -1,14 +1,18 @@
 
-# Easy Ultimate Capital. Slide The Exchange Wave. High-Leverage, No-Commission, Low-Spread.
+# TitanFlak
+# Easy Ultimate Capital. Slide The Exchange Wave. Big-Leverage, No-Commission, Low-Spread.
 # MaxiPrimo 2021
 
+import numpy as np
+import pandas as pd
+from zigzag import *
 import sys
 import math
 import matplotlib.pyplot as plt
 
 # get bid/ask prices and bid-ask/middle price
 def get_data():
-	f = open('ticks_now.txt')
+	f = open('ticks.txt')
 	time_arr = []
 	bid_arr = []
 	ask_arr = []
@@ -27,11 +31,11 @@ def get_data():
 	f.close()
 	return time_arr, bid_arr, ask_arr, mid_arr
 
-slide = 11*60*3 # sliding window used to draw
+slide = 11*60*15 # sliding window used to draw
 time_arr, bid_arr, ask_arr, mid_arr = get_data() # price data
 size = len(time_arr)
 day = 1440*60
-offset = slide*1 # data offset
+offset = slide*5 # data offset
 start = time_arr[offset] # start time
 
 # virtual pocket
@@ -42,15 +46,16 @@ last = 0
 trade = 0
 vec = 0
 
-def get_kernel(stride, slide, step, mid_arr):
+def get_kernel(stride, slide, step, array, offset):
 	# kernel regression
 	arr = []
-	for i in range(0, slide,step):
+	size = len(array)
+	for i in range(0,slide,step):
 		sum = 0
 		sumw = 0
-		for j in range(0, slide,step):
+		for j in range(0,slide,step):
 			w = math.exp(-(math.pow(i-j,2)/(stride*stride*2.0))) 
-			sum = sum + mid_arr[offset+s-j-1] * w
+			sum = sum + array[offset-j-1] * w
 			sumw = sumw + w
 		arr.insert(0, sum/sumw)
 	return arr;
@@ -74,7 +79,7 @@ for j in range(int(size/slide)):
 	avg = avg/slide
 
 	# iterate ask/bid-middle prices flow
-	step = 10
+	step = 100
 	for s in range(0, slide, step):
 		
 		time = time_arr[offset+s]
@@ -83,34 +88,38 @@ for j in range(int(size/slide)):
 		mid = mid_arr[offset+s]
 
 		# trend regression
-		trend = get_kernel(600, 1800, 30, mid_arr)
+		trend = get_kernel(int(slide/4), slide, step, mid_arr, offset+s)
 		size = len(trend)
-		trend_dist = trend[size-1] - trend[size-2]
-		trend_buy = trend_dist > 0
-		trend_sell = trend_dist < 0
+		trend_dist = (trend[size-1] - trend[size-2])*15
 		x = [s, s]
-		y = [trend[size-1], trend[size-1]+(trend_dist*20)]
-		if(trend_buy):
+		y = [trend[size-1], trend[size-1]+trend_dist]
+		if(trend_dist > 0):
 			plt.plot(x, y, color="blue", linewidth=0.5)
-		if(trend_sell):
+		if(trend_dist < 0):
 			plt.plot(x, y, color="red", linewidth=0.5)
-
-		# freq regression
-		wave = get_kernel(50, 900, 30, mid_arr)
+		
+		# wave regression
+		wave = get_kernel(int(slide/10), int(slide/5), step, mid_arr, offset+s)
 		size = len(wave)
-		wave_dist = wave[size-1] - wave[size-2]
-		wave_buy = wave_dist > 0
-		wave_sell = wave_dist < 0
+		wave_dist = (wave[size-1] - wave[size-2])*15
 		x = [s, s]
-		y = [wave[size-1], wave[size-1]+(wave_dist*5)]
-		if(wave_buy):
+		y = [wave[size-1], wave[size-1]+wave_dist]
+		if(wave_dist > 0):
 			plt.plot(x, y, color="yellow", linewidth=0.5)
-		if(wave_sell):
+		if(wave_dist < 0):
 			plt.plot(x, y, color="gray", linewidth=0.5)
-
-		# decision
-		buy = (trend_buy)
-		sell = (trend_sell)
+	
+		# trend calculation
+		factor = sum([trend_dist, wave_dist])
+		x = [s, s]
+		y = [bid_arr[offset], bid_arr[offset]+(factor)];
+		if(factor > 0):
+			plt.plot(x, y, color="green", linewidth=0.5)
+		elif(factor < 0):
+			plt.plot(x, y, color="orange", linewidth=0.5)
+		
+		buy = False
+		sell = False
 
 		# hold or switch direction
 		finish = True
@@ -148,12 +157,12 @@ for j in range(int(size/slide)):
 			had = 0
 		#else:
 		#	print("none.")
-
+		
 	# draw window values
-	#plt.plot(bid_arr[offset:offset+slide], color='blue', linewidth=0.5)
-	#plt.plot(ask_arr[offset:offset+slide], color='red', linewidth=0.5);
-	#plt.plot(mid_arr[offset:offset+slide], color='black', linewidth=0.5)
-	#plt.show()
+	plt.plot(bid_arr[offset:offset+slide], color='blue', linewidth=0.5)
+	plt.plot(ask_arr[offset:offset+slide], color='red', linewidth=0.5);
+	plt.plot(mid_arr[offset:offset+slide], color='black', linewidth=0.5)
+	plt.show()
 
 	# slide data
 	offset = offset + slide
