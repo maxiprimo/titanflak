@@ -33,7 +33,6 @@ def get_data():
 slide = 11*60*30 # sliding window used to draw
 step = 11*15
 time_arr, bid_arr, ask_arr, mid_arr = get_data() # price data
-size = len(time_arr)
 day = 1440*60
 offset = slide # data offset
 start = time_arr[offset] # start time
@@ -46,16 +45,15 @@ last = 0
 trade = 0
 vec = 0
 
-def get_kernel(stride, slide, step, array, offset):
+def get_kernel(stride, slide, step, array, end):
 	# kernel regression
 	arr = []
-	size = len(array)
 	for i in range(0,slide,step):
 		sum = 0
 		sumw = 0
 		for j in range(0,slide,step):
 			w = math.exp(-(math.pow(i-j,2)/(stride*stride*2.0))) 
-			sum = sum + array[offset-j-1] * w
+			sum = sum + array[end-j-1] * w
 			sumw = sumw + w
 		arr.insert(0, sum/sumw)
 	return arr;
@@ -63,6 +61,7 @@ def get_kernel(stride, slide, step, array, offset):
 # slide data through window
 volume = []
 last_zigzag = 0
+size = len(time_arr)
 for j in range(int(size/slide)):
 	
 	# end after one day
@@ -74,7 +73,7 @@ for j in range(int(size/slide)):
 	plt.clf()
 
 	# iterate ask/bid-middle prices flow
-	for s in range(0, slide, step):
+	for s in range(0,slide,step):
 		
 		time = time_arr[offset+s]
 		bid = bid_arr[offset+s]
@@ -96,7 +95,7 @@ for j in range(int(size/slide)):
 		# wave regression
 		wave = get_kernel(int(slide/8), int(slide/4), step, mid_arr, offset+s)
 		size = len(wave)
-		wave_dist = (wave[size-1] - wave[size-2])*15*15
+		wave_dist = (wave[size-1] - wave[size-2])*15
 		x = [s, s]
 		y = [wave[size-1], wave[size-1]+wave_dist]
 		"""
