@@ -31,11 +31,11 @@ def get_data():
 	return time_arr, bid_arr, ask_arr, mid_arr
 
 slide = 11*60*30 # sliding window used to draw
-step = 100
+step = 11*15
 time_arr, bid_arr, ask_arr, mid_arr = get_data() # price data
 size = len(time_arr)
 day = 1440*60
-offset = slide*5 # data offset
+offset = slide # data offset
 start = time_arr[offset] # start time
 
 # virtual pocket
@@ -61,7 +61,8 @@ def get_kernel(stride, slide, step, array, offset):
 	return arr;
 
 # slide data through window
-last_factor = 0
+volume = []
+last_zigzag = 0
 for j in range(int(size/slide)):
 	
 	# end after one day
@@ -86,35 +87,57 @@ for j in range(int(size/slide)):
 		trend_dist = (trend[size-1] - trend[size-2])*15
 		x = [s, s]
 		y = [trend[size-1], trend[size-1]+trend_dist]
+		"""
 		if(trend_dist > 0):
 			plt.plot(x, y, color="blue", linewidth=0.5)
 		if(trend_dist < 0):
 			plt.plot(x, y, color="red", linewidth=0.5)
-		
+		"""
 		# wave regression
 		wave = get_kernel(int(slide/10), int(slide/5), step, mid_arr, offset+s)
 		size = len(wave)
 		wave_dist = (wave[size-1] - wave[size-2])*15
 		x = [s, s]
 		y = [wave[size-1], wave[size-1]+wave_dist]
+		"""
 		if(wave_dist > 0):
 			plt.plot(x, y, color="yellow", linewidth=0.5)
 		if(wave_dist < 0):
 			plt.plot(x, y, color="gray", linewidth=0.5)
-	
-		# trend calculation
+		"""
+		# factor calculation
 		factor = sum([trend_dist, wave_dist])
+		"""
 		x = [s, s]
-		y = [bid_arr[offset], bid_arr[offset]+(factor)];
+		y = [bid_arr[offset]-250, bid_arr[offset]-250+(factor)];
 		if(factor > 0):
 			plt.plot(x, y, color="green", linewidth=0.5)
 		elif(factor < 0):
 			plt.plot(x, y, color="orange", linewidth=0.5)
-		
+		"""		
+		volume.append(factor)
+		size = int(slide/step)+1
+		if(len(volume)<size):
+			continue
+		if(len(volume)>size):
+			volume.pop(0)
+
+		# zig zag regression
+		zigzag = get_kernel(int(len(volume)/2), len(volume), 1, volume, len(volume))
+		size = len(zigzag)
+		zigzag_dist = (zigzag[size-1] - zigzag[size-2])*250
+		x = [s, s]
+		y = [bid_arr[offset]-250, bid_arr[offset]-250+zigzag_dist]
+		if(zigzag_dist > 0):
+			plt.plot(x, y, color="blue", linewidth=0.5)
+		if(zigzag_dist < 0):
+			plt.plot(x, y, color="red", linewidth=0.5)
+
+		last_zigzag = zigzag_dist
+
+		# decision
 		buy = False
 		sell = False
-
-		last_factor = factor
 
 		# hold or switch direction
 		finish = True
@@ -150,7 +173,7 @@ for j in range(int(size/slide)):
 				last = bid
 
 			had = 0
-		
+
 	# draw window values
 	plt.plot(bid_arr[offset:offset+slide], color='blue', linewidth=0.5)
 	plt.plot(ask_arr[offset:offset+slide], color='red', linewidth=0.5);
