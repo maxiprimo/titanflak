@@ -84,9 +84,9 @@ for j in range(int(size/slide)):
 		trend = get_kernel(int(slide/2), int(slide/1), step, mid_arr, offset+s)
 		size = len(trend)
 		trend_dist = (trend[size-1] - trend[size-2])*15
+		"""
 		x = [s, s]
 		y = [trend[size-1], trend[size-1]+trend_dist]
-		"""
 		if(trend_dist > 0):
 			plt.plot(x, y, color="blue", linewidth=0.5)
 		if(trend_dist < 0):
@@ -96,9 +96,9 @@ for j in range(int(size/slide)):
 		wave = get_kernel(int(slide/8), int(slide/4), step, mid_arr, offset+s)
 		size = len(wave)
 		wave_dist = (wave[size-1] - wave[size-2])*15
+		"""
 		x = [s, s]
 		y = [wave[size-1], wave[size-1]+wave_dist]
-		"""
 		if(wave_dist > 0):
 			plt.plot(x, y, color="yellow", linewidth=0.5)
 		if(wave_dist < 0):
@@ -124,7 +124,7 @@ for j in range(int(size/slide)):
 		# zig zag regression
 		zigzag = get_kernel(int(len(volume)/4), len(volume), 1, volume, len(volume))
 		size = len(zigzag)
-		zigzag_dist = (zigzag[size-1] - zigzag[size-2])*50
+		zigzag_dist = (zigzag[size-1] - zigzag[size-2])*500
 		x = [s, s]
 		y = [bid_arr[offset]-250, bid_arr[offset]-250+zigzag_dist]
 		if(zigzag_dist > 0):
