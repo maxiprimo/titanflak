@@ -31,7 +31,8 @@ def get_data():
 	f.close()
 	return time_arr, bid_arr, ask_arr, mid_arr
 
-slide = 11*60*15 # sliding window used to draw
+slide = 11*60*30 # sliding window used to draw
+step = 100
 time_arr, bid_arr, ask_arr, mid_arr = get_data() # price data
 size = len(time_arr)
 day = 1440*60
@@ -61,6 +62,7 @@ def get_kernel(stride, slide, step, array, offset):
 	return arr;
 
 # slide data through window
+last_factor = 0
 for j in range(int(size/slide)):
 	
 	# end after one day
@@ -71,15 +73,7 @@ for j in range(int(size/slide)):
 	# draw reset
 	plt.clf()
 
-	# get price change average
-	avg = 0
-	for i in range(slide):
-		idx = offset+i-slide
-		avg = avg + (ask_arr[idx] - bid_arr[idx])
-	avg = avg/slide
-
 	# iterate ask/bid-middle prices flow
-	step = 100
 	for s in range(0, slide, step):
 		
 		time = time_arr[offset+s]
@@ -120,6 +114,8 @@ for j in range(int(size/slide)):
 		
 		buy = False
 		sell = False
+
+		last_factor = factor
 
 		# hold or switch direction
 		finish = True
