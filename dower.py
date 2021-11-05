@@ -71,7 +71,7 @@ def run_train(train, new_or_exit=True):
 
 bid_arr, ask_arr, close_arr = get_data('market.txt', 5) # price data
 data = close_arr[-150*1000:-50*1000] # train data
-steps_in, steps_out = 300,100 # windows
+steps_in, steps_out = 150,50 # windows
 span = steps_in+steps_out
 new = True # train new or load model
 train = []
