@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_absolute_error
+from sklearn.preprocessing import MinMaxScaler
 from xgboost import XGBRegressor
 
 # get close price ticks
@@ -19,7 +20,6 @@ def get_data(path, step):
 	bid_arr = []
 	ask_arr = []
 	close_arr = []
-	steps = 5
 	count = 0
 	while True:
 		line = f.readline()
@@ -46,14 +46,14 @@ def series_to_supervised(data, n_in=1, n_out=1):
 	agg.dropna(inplace=True)
 	return agg.values
  
-def run_forecast(model, data, steps):
+def run_forecast(model, past, steps):
 	forecast = []
 	for i in range(steps):
-		test = series_to_supervised(data, n_in=steps_in, n_out=steps_out)
+		test = series_to_supervised(past, n_in=steps_in, n_out=1)
 		yhat = model.predict(np.asarray([test[0, :-1]]))
-		data.append(yhat[-1])
+		past.append(yhat[-1])
 		forecast.append(yhat[-1])
-		data = data[1:]
+		past = past[1:]
 	return forecast
 
 def run_train(train, new_or_exit=True):
@@ -61,7 +61,7 @@ def run_train(train, new_or_exit=True):
 		history = [x for x in train]
 		train = np.asarray(train)
 		trainX, trainy = train[:, :-1], train[:, -1]
-		model = XGBRegressor(objective='reg:squarederror', n_estimators=1000)
+		model = XGBRegressor(n_estimators=1500, random_state=7, tree_method='hist')
 		model.fit(trainX, trainy)
 		pickle.dump(model, open("model.pkl", "wb"))
 		return model
@@ -69,19 +69,20 @@ def run_train(train, new_or_exit=True):
 		model = pickle.load(open("model.pkl", "rb"))
 		return model
 
-bid_arr, ask_arr, close_arr = get_data('market.txt', 5) # price data
-data = close_arr[-150*1000:-50*1000] # train data
-steps_in, steps_out = 150,50 # windows
+bid_arr, ask_arr, close_arr = get_data('market.txt', 12) # price data
+offset = -10*1000
+begin = offset-100*1000
+data = close_arr[begin:offset] # train data
+steps_in, steps_out = 150,30 # windows
 span = steps_in+steps_out
 new = True # train new or load model
 train = []
 if(new):
-	train = series_to_supervised(data, n_in=steps_in, n_out=steps_out)
+	train = series_to_supervised(data, n_in=steps_in, n_out=1)
 model = run_train(train, new)
-offset = -50*1000
-test = data[offset:] # forecast data
-bid_list = bid_arr[offset:]
-ask_list = ask_arr[offset:]
+test = close_arr[offset:] # forecast data
+bid_arr = bid_arr[offset:]
+ask_arr = ask_arr[offset:]
 
 # virtual pocket
 had = 100 # start cash
@@ -108,8 +109,8 @@ for i in range(0, len(test), steps_out):
 		buy = diff > 0
 		sell = diff < 0
 
-		bid = bid_list[i+span+j]
-		ask = ask_list[i+span+j]
+		bid = bid_arr[i+span+j]
+		ask = ask_arr[i+span+j]
 		
 		# hold or switch direction
 		finish = True
