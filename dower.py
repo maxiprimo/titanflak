@@ -11,8 +11,19 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_absolute_error
-from sklearn.preprocessing import MinMaxScaler
 from xgboost import XGBRegressor
+
+def get_relative(data):
+	result = []
+	for i in range(1, len(data)):
+		result.append(data[i]-data[i-1])
+	return result
+
+def get_absolute(data):
+	result = [100*1000]
+	for i in range(len(data)):
+		result.append(result[-1]+data[i])
+	return result
 
 # get close price ticks
 def get_data(path, step):
@@ -34,7 +45,7 @@ def get_data(path, step):
 	f.close()
 	return bid_arr, ask_arr, close_arr
 
-def series_to_supervised(data, n_in=1, n_out=1):
+def series_to_supervised(data, n_in, n_out):
 	n_vars = 1 if type(data) is list else data.shape[1]
 	df = pd.DataFrame(data)
 	cols = list()
@@ -49,7 +60,7 @@ def series_to_supervised(data, n_in=1, n_out=1):
 def run_forecast(model, past, steps):
 	forecast = []
 	for i in range(steps):
-		test = series_to_supervised(past, n_in=steps_in, n_out=1)
+		test = series_to_supervised(past, n_in=steps_in, n_out=steps_out)
 		yhat = model.predict(np.asarray([test[0, :-1]]))
 		past.append(yhat[-1])
 		forecast.append(yhat[-1])
@@ -69,16 +80,18 @@ def run_train(train, new_or_exit=True):
 		model = pickle.load(open("model.pkl", "rb"))
 		return model
 
-bid_arr, ask_arr, close_arr = get_data('market.txt', 12) # price data
+seconds = 3
+bid_arr, ask_arr, close_arr = get_data('market.txt', int(seconds*6)) # price data
+close_arr = get_relative(close_arr)
 offset = -10*1000
-begin = offset-100*1000
+begin = offset-1000*1000
 data = close_arr[begin:offset] # train data
-steps_in, steps_out = 150,30 # windows
+steps_in, steps_out = int(180/seconds),int(60/seconds) # windows
 span = steps_in+steps_out
-new = True # train new or load model
+new = False # train new or load model
 train = []
 if(new):
-	train = series_to_supervised(data, n_in=steps_in, n_out=1)
+	train = series_to_supervised(data, n_in=steps_in, n_out=steps_out)
 model = run_train(train, new)
 test = close_arr[offset:] # forecast data
 bid_arr = bid_arr[offset:]
@@ -96,8 +109,8 @@ vec = 0
 for i in range(0, len(test), steps_out):
 
 	# do forecast
-	past = test[i:i+span]
-	future = test[i+span:i+span+steps_out]
+	past = test[i:i+span+int(60/seconds)]
+	future = test[i+span+int(60/seconds):i+span+int(60/seconds)+(steps_out)]
 	forecast = run_forecast(model, past, steps_out)
 	error = mean_absolute_error(future, forecast)
 	print("mean_error:"+str(error))
@@ -109,8 +122,8 @@ for i in range(0, len(test), steps_out):
 		buy = diff > 0
 		sell = diff < 0
 
-		bid = bid_arr[i+span+j]
-		ask = ask_arr[i+span+j]
+		bid = bid_arr[i+span+int(60/seconds)+j]
+		ask = ask_arr[i+span+int(60/seconds)+j]
 		
 		# hold or switch direction
 		finish = True
@@ -145,6 +158,6 @@ for i in range(0, len(test), steps_out):
 				last = bid
 			had = 0
 
-	plt.plot(future, color='black', linewidth=0.5)
-	plt.plot(forecast, color='red', linewidth=0.5)
+	plt.plot(get_absolute(future), color='black', linewidth=0.5)
+	plt.plot(get_absolute(forecast), color='red', linewidth=0.5)
 	plt.show()
